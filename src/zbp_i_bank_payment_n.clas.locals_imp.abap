@@ -1,0 +1,142 @@
+CLASS lsc_zi_bank_payment_n DEFINITION INHERITING FROM cl_abap_behavior_saver.
+  PROTECTED SECTION.
+
+    METHODS save_modified REDEFINITION.
+
+    METHODS cleanup_finalize REDEFINITION.
+
+ENDCLASS.
+
+
+
+CLASS lsc_zi_bank_payment_n IMPLEMENTATION.
+
+  METHOD save_modified.
+
+   DATA lo_pfd TYPE REF TO zcl_bank_payment.  "<-write your class name
+    DATA wa_data TYPE zdb_bank_pay_n.  "<-write your table name
+
+
+    CREATE OBJECT lo_pfd.
+
+    IF update-zi_bank_payment_doc_n IS NOT INITIAL."<-write your interface name
+
+
+      LOOP AT update-zi_bank_payment_doc_n INTO DATA(ls_data)."<-write your interface name
+
+
+        DATA(new) = NEW zbg_bank_payment( iv_bill = ls_data-AccountingDocument iv_comp = ls_data-CompanyCode
+         iv_fisc = ls_data-FiscalYear iv_m_ind = ls_data-m_ind   )."<-write your background process class
+
+        DATA background_process TYPE REF TO if_bgmc_process_single_op.
+
+        TRY.
+
+            background_process = cl_bgmc_process_factory=>get_default( )->create( ).
+
+            background_process->set_operation_tx_uncontrolled( new ).
+
+            IF ls_data-m_ind EQ 'X'.
+*                 MOVE-CORRESPONDING ls_data TO wa_data.
+              wa_data-AccountingDocument    = ls_data-AccountingDocument.
+              wa_data-companycode = ls_data-CompanyCode.
+              wa_data-base64 = ls_data-base64.
+              wa_data-m_ind    = ls_data-m_ind.
+              MODIFY zdb_bank_pay_n FROM @wa_data.  "<-write your table name
+            ENDIF.
+
+            background_process->save_for_execution( ).
+
+
+
+          CATCH cx_bgmc INTO DATA(exception).
+            DATA(lv_text) = exception->get_text( ).
+            "handle exception
+        ENDTRY.
+
+      ENDLOOP.
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD cleanup_finalize.
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lhc_zi_bank_payment_doc_n DEFINITION INHERITING FROM cl_abap_behavior_handler.
+  PRIVATE SECTION.
+
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      IMPORTING keys REQUEST requested_features FOR zi_bank_payment_doc_n RESULT result.
+
+    METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
+      IMPORTING keys REQUEST requested_authorizations FOR zi_bank_payment_doc_n RESULT result.
+
+    METHODS zprint FOR MODIFY
+      IMPORTING keys FOR ACTION zi_bank_payment_doc_n~zprint RESULT result.
+
+ENDCLASS.
+
+CLASS lhc_zi_bank_payment_doc_n IMPLEMENTATION.
+
+  METHOD get_instance_features.
+  ENDMETHOD.
+
+  METHOD get_instance_authorizations.
+  ENDMETHOD.
+
+  METHOD zprint.
+
+
+   DATA lo_pfd TYPE REF TO zcl_bank_payment. "<-write your logic class
+
+    CREATE OBJECT lo_pfd.
+
+    READ ENTITIES OF ZI_BANK_PAYMENT_n IN LOCAL MODE "<-write your interface name
+           ENTITY zi_bank_payment_doc_n   "<-write your interface name
+          ALL FIELDS WITH CORRESPONDING #( keys )
+          RESULT DATA(lt_result).
+
+    LOOP AT lt_result INTO DATA(lw_result).
+
+      DATA : update_lines TYPE TABLE FOR UPDATE  ZI_BANK_PAYMENT_n,   "<-write your interface name
+             update_line  TYPE STRUCTURE FOR UPDATE  ZI_BANK_PAYMENT_n.   "<-write your interface name
+
+      update_line-%tky                   = lw_result-%tky.
+      update_line-base64                 = 'A'.
+      update_line-m_ind                  = abap_true.
+
+      IF update_line-base64 IS NOT INITIAL.
+
+        APPEND update_line TO update_lines.
+
+        MODIFY ENTITIES OF  ZI_BANK_PAYMENT_n IN LOCAL MODE    "<-write your interface name
+         ENTITY zi_bank_payment_doc_n    "<-write your interface behaviour definition name
+           UPDATE
+           FIELDS ( base64 m_ind )
+           WITH update_lines
+         REPORTED reported
+         FAILED failed
+         MAPPED mapped.
+
+
+        READ ENTITIES OF ZI_BANK_PAYMENT_n IN LOCAL MODE  ENTITY zi_bank_payment_doc_n  "<-write your interface name and behaviour definition name
+            ALL FIELDS WITH CORRESPONDING #( lt_result ) RESULT DATA(lt_final).
+
+        result =  VALUE #( FOR  lw_final IN  lt_final ( %tky = lw_final-%tky
+         %param = lw_final  )  ).
+
+        APPEND VALUE #( %tky = keys[ 1 ]-%tky
+                        %msg = new_message_with_text(
+                        severity = if_abap_behv_message=>severity-success
+                        text = 'PDF Generated!, Please Wait for 30 Sec' )
+                         ) TO reported-zi_bank_payment_doc_n.    "<-write your interface behaviour definition name
+
+      ELSE.
+
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+ENDCLASS.

@@ -1,0 +1,23 @@
+managed implementation in class zbp_i_bank_payment_n unique;
+strict ( 2 );
+
+define behavior for ZI_BANK_PAYMENT_n  alias ZI_BANK_PAYMENT_DOC_N //alias <alias_name>
+with unmanaged save
+lock master
+authorization master ( instance )
+//etag master <field_name>
+{
+   action ( features : instance ) ZPRINT result [1] $self;
+  update;
+  field ( readonly ) AccountingDocument, CompanyCode, FiscalYear;
+    mapping for zdb_bank_pay_n
+    {
+      AccountingDocument = AccountingDocument;
+      CompanyCode        = CompanyCode;
+      FiscalYear         = FiscalYear;
+      from_date          = from_date;
+      to_date            = to_date;
+      base64             = base64;
+    }
+
+}

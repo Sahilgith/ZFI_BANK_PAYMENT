@@ -1,0 +1,4 @@
+@EndUserText.label: 'service definition for bank payment'
+define service ZSD_BANK_PAYMENT {
+  expose ZC_BANK_PAYMENT;
+}

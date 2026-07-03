@@ -1,0 +1,35 @@
+{
+  "formatVersion": "2",
+  "header": {
+    "description": "An SAP Fiori application.",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "appType": "ui5",
+    "catalogId": "SAP_TC_UI5_REPO_UIAD",
+    "targetMappingTitle": "Bank Payment Voucher"
+  },
+  "ui5AppDetails": {
+    "appId": "zbankpay"
+  },
+  "navigation": {
+    "targetMappingId": "UI5R_D91EF573AFE5DC173E84883C26795BB50FDF23E7_TM",
+    "semanticObject": "zbank_pay",
+    "action": "Display",
+    "desktop": true,
+    "tablet": true,
+    "phone": true
+  },
+  "tiles": [
+    {
+      "id": "UI5R_D91EF573AFE5DC173E84883C26795BB50FDF23E7_AL",
+      "tileType": "static",
+      "isDefault": true,
+      "standard": {
+        "title": "Bank Payment Voucher",
+        "icon": "sap-icon://print"
+      }
+    }
+  ]
+}
